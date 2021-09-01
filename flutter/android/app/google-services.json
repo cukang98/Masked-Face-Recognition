@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "50754427470",
+    "firebase_url": "https://final-year-project-9e674.firebaseio.com",
+    "project_id": "final-year-project-9e674",
+    "storage_bucket": "final-year-project-9e674.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:50754427470:android:8912c8f84c091c4a38011f",
+        "android_client_info": {
+          "package_name": "com.fyp.masked_face_recognition"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "50754427470-tqgqeu3fo9c2ted3g7orjq44fbei87go.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcR7sRPPf3Y8bi2qdfItoQgt96pfq9Sok"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "50754427470-8smgg0qfhbmi69b3sboegcqadvol6ks2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

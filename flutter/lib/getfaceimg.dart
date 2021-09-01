@@ -1,15 +1,12 @@
 import 'dart:io';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:login_page_day_23/animation/FadeAnimation.dart';
+import 'animation/FadeAnimation.dart';
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:login_page_day_23/login.dart';
-import 'package:path/path.dart';
-import 'package:async/async.dart';
-import 'package:http_parser/http_parser.dart';
-import 'package:tflite/tflite.dart';
+import 'login.dart';
+import 'package:firebase_ml_vision/firebase_ml_vision.dart';
+import 'package:image/image.dart' as imglib;
 
 class FaceImage extends StatefulWidget {
   @override
@@ -17,65 +14,70 @@ class FaceImage extends StatefulWidget {
 }
 
 class _FaceImageState extends State<FaceImage> {
-  bool _loading = true;
   File _image;
   final imagePicker = ImagePicker();
-  List _predictions = [];
+  var interpreter;
+
   // For picking image from Gallery
   Future loadImageGallery() async {
     final image = await imagePicker.getImage(source: ImageSource.gallery);
-    detectImage(image);
+    if (image != null) _waitingSnack(context);
+    bool faceFound = await detectFace(File(image.path));
+    setState(() {
+      // ignore: unrelated_type_equality_checks
+      if (faceFound) {
+        _image = File(image.path);
+      }
+    });
   }
 
   // For picking image from Camera
   Future loadImageCamera() async {
     final image = await imagePicker.getImage(source: ImageSource.camera);
-    detectImage(image);
-  }
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    loadModel();
-  }
-
-  // LoadModel() for connection app with TensorFlow Lite
-  loadModel() async {
-    Tflite.close();
-    await Tflite.loadModel(
-        model: 'assets/model_unquant.tflite', labels: 'assets/labels.txt');
-  }
-
-  // Method for Image detection
-  Future detectImage(image) async {
-    var runModelOnImage = Tflite.runModelOnImage(
-      path: image.path,
-      numResults: 2,
-      threshold: 0.6,
-      imageMean: 127.5,
-      imageStd: 127.5,
-    );
-    var prediction = await runModelOnImage;
+    if (image != null) _waitingSnack(context);
+    bool faceFound = await detectFace(File(image.path));
     setState(() {
-      _loading = false;
-      if (image != null) {
+      if (faceFound) {
         _image = File(image.path);
-        _predictions = prediction;
-      } else {
-        print('No image selected.');
       }
     });
-    setState(() {
-      _loading = false;
-      _predictions = prediction;
-    });
   }
 
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
+  Future<bool> detectFace(final fileImage) async {
+    Face _face;
+    bool faceFound = false;
+    final FirebaseVisionImage visionImage =
+        FirebaseVisionImage.fromFile(fileImage);
+    final FaceDetector faceDetector = FirebaseVision.instance.faceDetector();
+    final List<Face> faces = await faceDetector.processImage(visionImage);
+    // ignore: deprecated_member_use
+    print(faces.length);
+    if (faces.length == 0 || faces.length > 1) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Invalid image, Please try again"),
+      ));
+    } else {
+      faceFound = true;
+      for (_face in faces) {
+        double x, y, w, h;
+        x = (_face.boundingBox.left - 10);
+        y = (_face.boundingBox.top - 10);
+        w = (_face.boundingBox.width + 10);
+        h = (_face.boundingBox.height + 10);
+        imglib.Image croppedImage = imglib.copyCrop(
+            (imglib.decodeJpg(fileImage.readAsBytesSync())),
+            x.round(),
+            y.round(),
+            w.round(),
+            h.round());
+        croppedImage = imglib.copyResizeCropSquare(croppedImage, 112);
+        print(croppedImage);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Image loaded successfully"),
+        ));
+      }
+    }
+    return faceFound;
   }
 
   void alertDialog(BuildContext context) {
@@ -93,7 +95,6 @@ class _FaceImageState extends State<FaceImage> {
             child: Text("Yes"),
             onPressed: () {
               _image = null;
-              _loading = true;
               Navigator.of(context, rootNavigator: true).pop('dialog');
               setState(() {});
             }),
@@ -111,7 +112,6 @@ class _FaceImageState extends State<FaceImage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         elevation: 0,
-        brightness: Brightness.light,
         backgroundColor: Colors.white,
         leading: IconButton(
           onPressed: () {
@@ -140,7 +140,7 @@ class _FaceImageState extends State<FaceImage> {
                       Text(
                         "Face Photo Required",
                         style: TextStyle(
-                            fontSize: 30, fontWeight: FontWeight.bold),
+                            fontSize: 24, fontWeight: FontWeight.bold),
                       )),
                   SizedBox(
                     height: 20,
@@ -150,15 +150,8 @@ class _FaceImageState extends State<FaceImage> {
                       Text(
                         "We need your face photo to train our application, so next time it will recognize you",
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                       )),
-                  _loading == true
-                      ? Text("")
-                      : (Padding(
-                          padding: EdgeInsets.only(top:10),
-                          child: Text(_predictions[0]['label'].toString().substring(2),
-                              style: TextStyle(fontSize: 20)),
-                        )),
                   FadeAnimation(
                       1.2,
                       AvatarGlow(
@@ -173,7 +166,7 @@ class _FaceImageState extends State<FaceImage> {
                           shape: CircleBorder(),
                           child: CircleAvatar(
                             backgroundColor: Colors.grey[100],
-                            child: _loading == true
+                            child: _image == null
                                 ? Image.asset(
                                     'assets/face.png',
                                     height: 170,
@@ -214,7 +207,7 @@ class _FaceImageState extends State<FaceImage> {
                         )),
                     child: MaterialButton(
                       minWidth: double.infinity,
-                      height: 60,
+                      height: 50,
                       onPressed: loadImageGallery,
                       color: Colors.white,
                       elevation: 0,
@@ -223,7 +216,7 @@ class _FaceImageState extends State<FaceImage> {
                       child: Text(
                         "Select From Phone Gallery",
                         style: TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 18),
+                            fontWeight: FontWeight.w600, fontSize: 16),
                       ),
                     ),
                   )),
@@ -241,7 +234,7 @@ class _FaceImageState extends State<FaceImage> {
                         )),
                     child: MaterialButton(
                       minWidth: double.infinity,
-                      height: 60,
+                      height: 50,
                       onPressed: loadImageCamera,
                       color: Colors.yellow,
                       elevation: 0,
@@ -250,7 +243,7 @@ class _FaceImageState extends State<FaceImage> {
                       child: Text(
                         "Take Photo From Camera",
                         style: TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 18),
+                            fontWeight: FontWeight.w600, fontSize: 16),
                       ),
                     ),
                   )),
@@ -259,5 +252,15 @@ class _FaceImageState extends State<FaceImage> {
         ),
       ),
     );
+  }
+
+  Future _waitingSnack(BuildContext context) async {
+    return ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: new Row(
+      children: <Widget>[
+        new CircularProgressIndicator(),
+        new Text("    Please wait...")
+      ],
+    )));
   }
 }
