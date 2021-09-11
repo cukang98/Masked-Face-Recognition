@@ -22,7 +22,7 @@ class _MyHomePageState extends State<MyHomePage> {
   DataBaseService _dataBaseService = DataBaseService();
 
   CameraDescription cameraDescription;
-  bool loading = false;
+  bool loading = true;
 
   String githubURL =
       "https://github.com/MCarlomagno/FaceRecognitionAuth/tree/master";
