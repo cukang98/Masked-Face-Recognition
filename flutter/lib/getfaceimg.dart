@@ -1,12 +1,17 @@
+import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'animation/FadeAnimation.dart';
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:image_picker/image_picker.dart';
 import 'login.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
+import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
 import 'package:image/image.dart' as imglib;
+import 'utils/utils.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:camera/camera.dart';
+import 'package:quiver/collection.dart';
 
 class FaceImage extends StatefulWidget {
   @override
@@ -15,12 +20,18 @@ class FaceImage extends StatefulWidget {
 
 class _FaceImageState extends State<FaceImage> {
   File _image;
+  double threshold = 1.0;
   final imagePicker = ImagePicker();
   var interpreter;
-
+  dynamic data = {};
+  List e1;
+  CameraLensDirection _direction = CameraLensDirection.front;
+  Directory tempDir;
+  String _embPath;
+  File jsonFile;
   // For picking image from Gallery
   Future loadImageGallery() async {
-    final image = await imagePicker.getImage(source: ImageSource.gallery);
+    final image = await imagePicker.pickImage(source: ImageSource.gallery);
     if (image != null) _waitingSnack(context);
     bool faceFound = await detectFace(File(image.path));
     setState(() {
@@ -33,7 +44,7 @@ class _FaceImageState extends State<FaceImage> {
 
   // For picking image from Camera
   Future loadImageCamera() async {
-    final image = await imagePicker.getImage(source: ImageSource.camera);
+    final image = await imagePicker.pickImage(source: ImageSource.camera);
     if (image != null) _waitingSnack(context);
     bool faceFound = await detectFace(File(image.path));
     setState(() {
@@ -44,14 +55,20 @@ class _FaceImageState extends State<FaceImage> {
   }
 
   Future<bool> detectFace(final fileImage) async {
+    tempDir = await getApplicationDocumentsDirectory();
+    _embPath = tempDir.path + '/emb.json';
+    jsonFile = new File(_embPath);
+    if (jsonFile.existsSync()) data = json.decode(jsonFile.readAsStringSync());
+
     Face _face;
+
     bool faceFound = false;
+    String res;
+    dynamic finalResult = Multimap<String, Face>();
     final FirebaseVisionImage visionImage =
         FirebaseVisionImage.fromFile(fileImage);
     final FaceDetector faceDetector = FirebaseVision.instance.faceDetector();
     final List<Face> faces = await faceDetector.processImage(visionImage);
-    // ignore: deprecated_member_use
-    print(faces.length);
     if (faces.length == 0 || faces.length > 1) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("Invalid image, Please try again"),
@@ -65,19 +82,47 @@ class _FaceImageState extends State<FaceImage> {
         w = (_face.boundingBox.width + 10);
         h = (_face.boundingBox.height + 10);
         imglib.Image croppedImage = imglib.copyCrop(
-            (imglib.decodeJpg(fileImage.readAsBytesSync())),
-            x.round(),
-            y.round(),
-            w.round(),
-            h.round());
+            (imglib.decodeJpg(fileImage.readAsBytesSync())), x.round(), y.round(), w.round(), h.round());
         croppedImage = imglib.copyResizeCropSquare(croppedImage, 112);
-        print(croppedImage);
+        res = _recog(croppedImage);
+        finalResult.add(res, _face);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("Image loaded successfully"),
         ));
       }
     }
     return faceFound;
+  }
+
+  void handleSave() async {
+    if (_image != null) {
+      jsonFile.writeAsStringSync(json.encode(data));
+    }
+  }
+  String _recog(imglib.Image img) {
+    List input = imageToByteListFloat32(img, 112, 128, 128);
+    input = input.reshape([1, 112, 112, 3]);
+    List output = [(1 * 192)].reshape([1, 192]);
+    interpreter.run(input, output);
+    output = output.reshape([192]);
+    e1 = List.from(output);
+    return compare(e1).toUpperCase();
+  }
+
+  String compare(List currEmb) {
+    if (data.length == 0) return "No Face saved";
+    double minDist = 999;
+    double currDist = 0.0;
+    String predRes = "NOT RECOGNIZED";
+    for (String label in data.keys) {
+      currDist = euclideanDistance(data[label], currEmb);
+      if (currDist <= threshold && currDist < minDist) {
+        minDist = currDist;
+        predRes = label;
+      }
+    }
+    print(minDist.toString() + " " + predRes);
+    return predRes;
   }
 
   void alertDialog(BuildContext context) {
@@ -103,6 +148,37 @@ class _FaceImageState extends State<FaceImage> {
       backgroundColor: Colors.white,
     );
     showDialog(context: context, builder: (BuildContext context) => alert);
+  }
+
+  imglib.Image _convertCameraImage(
+      CameraImage image, CameraLensDirection _dir) {
+    int width = image.width;
+    int height = image.height;
+    var img = imglib.Image(width, height);
+    const int hexFF = 0xFF000000;
+    final int uvyButtonStride = image.planes[1].bytesPerRow;
+    final int uvPixelStride = image.planes[1].bytesPerPixel;
+    for (int x = 0; x < width; x++) {
+      for (int y = 0; y < height; y++) {
+        final int uvIndex =
+            uvPixelStride * (x / 2).floor() + uvyButtonStride * (y / 2).floor();
+        final int index = y * width + x;
+        final yp = image.planes[0].bytes[index];
+        final up = image.planes[1].bytes[uvIndex];
+        final vp = image.planes[2].bytes[uvIndex];
+        // Calculate pixel color
+        int r = (yp + vp * 1436 / 1024 - 179).round().clamp(0, 255);
+        int g = (yp - up * 46549 / 131072 + 44 - vp * 93604 / 131072 + 91)
+            .round()
+            .clamp(0, 255);
+        int b = (yp + up * 1814 / 1024 - 227).round().clamp(0, 255);
+        img.data[index] = hexFF | (b << 16) | (g << 8) | r;
+      }
+    }
+    var img1 = (_dir == CameraLensDirection.front)
+        ? imglib.copyRotate(img, -90)
+        : imglib.copyRotate(img, 90);
+    return img1;
   }
 
   @override
