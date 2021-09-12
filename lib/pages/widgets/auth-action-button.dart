@@ -28,7 +28,6 @@ class _AuthActionButtonState extends State<AuthActionButton> {
   final FaceNetService _faceNetService = FaceNetService();
   final DataBaseService _dataBaseService = DataBaseService();
   final CameraService _cameraService = CameraService();
-
   final TextEditingController _userTextEditingController =
       TextEditingController(text: '');
   final TextEditingController _passwordTextEditingController =
@@ -82,11 +81,14 @@ class _AuthActionButtonState extends State<AuthActionButton> {
     }
     if (_token != null) {
       print(_emailTextEditingController.text + _passwordTextEditingController.text);
-
+      setUserEmail(this._emailTextEditingController.text);
+      setUserName(this.predictedUser.user);
+      setUserImagePath(_cameraService.imagePath);
       Navigator.push(
           context,
           MaterialPageRoute(
               builder: (BuildContext context) => Profile(
+                    this._emailTextEditingController.text,
                     this.predictedUser.user,
                     imagePath: _cameraService.imagePath,
                   )));

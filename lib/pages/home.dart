@@ -6,7 +6,6 @@ import 'package:face_net_authentication/services/ml_kit_service.dart';
 import 'utils/FadeAnimation.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -100,6 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
+      drawer:Drawer(),
       body: !loading
           ? SafeArea(
               child: Center(
