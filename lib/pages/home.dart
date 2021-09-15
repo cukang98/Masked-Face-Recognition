@@ -3,7 +3,7 @@ import 'package:face_net_authentication/pages/sign-in.dart';
 import 'package:face_net_authentication/pages/sign-up.dart';
 import 'package:face_net_authentication/services/facenet.service.dart';
 import 'package:face_net_authentication/services/ml_kit_service.dart';
-import 'utils/FadeAnimation.dart';
+import 'utils/animation.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
