@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:face_net_authentication/pages/widgets/app_button.dart';
 import 'package:face_net_authentication/pages/profile_detail.dart';
+import 'package:face_net_authentication/pages/checkin.dart';
 import 'package:flutter/material.dart';
-import 'home.dart';
 
 import 'package:carousel_slider/carousel_slider.dart';
 
@@ -332,7 +332,7 @@ class Profile extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => MyHomePage()),
+                                      builder: (context) => CheckIn()),
                                 );
                               },
                               icon: Icon(
