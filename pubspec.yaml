@@ -46,6 +46,10 @@ dependencies:
   flutter_slider_drawer: ^2.0.0
   page_transition: ^2.0.2
   google_maps_flutter: ^2.0.9
+  geolocator: ^7.6.1
+  flutter_easyloading: ^3.0.3
+  shimmer_animation: ^2.1.0+1
+  http: ^0.13.3
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,32 +1,108 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:face_net_authentication/pages/widgets/app_button.dart';
+import 'package:face_net_authentication/pages/utils/animation.dart';
+import 'package:face_net_authentication/pages/utils/assistantmethods.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:shimmer_animation/shimmer_animation.dart';
+import 'package:geolocator/geolocator.dart';
 import 'dart:async';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 class CheckIn extends StatelessWidget {
-  Completer<GoogleMapController> _controller = Completer();
   GoogleMapController newGoogleMapController;
-  static final CameraPosition _kGooglePlex = CameraPosition(
-    target: LatLng(37.42796133580664, -122.085749655962),
-    zoom: 14.4746,
-  );
-  
+  Position currentPosition;
+  CameraPosition cameraPosition;
+
+  Future<CameraPosition> currentLocation() async {
+    EasyLoading.show();
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best);
+    LatLng latLatPosition = LatLng(position.latitude, position.longitude);
+    cameraPosition = new CameraPosition(target: latLatPosition, zoom: 18);
+    return cameraPosition;
+  }
+
+  Future<String> currentAddress() async {
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best);
+    return AssistantMethods.searchCoordinateAddress(position);
+  }
+
+  FutureBuilder getMap() {
+    return FutureBuilder(
+        future: currentLocation(),
+        // ignore: missing_return
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            Future.delayed(Duration(milliseconds: 750), () {
+              EasyLoading.dismiss();
+            });
+            return GoogleMap(
+              mapType: MapType.normal,
+              initialCameraPosition: snapshot.data,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              scrollGesturesEnabled: false,
+              zoomControlsEnabled: false,
+              zoomGesturesEnabled: false,
+            );
+          } else
+            return Shimmer(
+                child: Container(
+              color: Colors.grey[300],
+            ));
+        });
+  }
+
   Widget build(BuildContext context) {
     var containerHeight = MediaQuery.of(context).size.height / 2;
     var containerWidth = MediaQuery.of(context).size.height / 2.5;
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('E yyyy/MM/dd KK:mma').format(now);
     return Scaffold(
-        backgroundColor: Color(0xFFFAFAFA),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Stack(
           children: [
             Align(
                 alignment: Alignment.topCenter,
                 child: Container(
-                    color: Color(0xFFFF6161),
-                    height: MediaQuery.of(context).size.height * 0.5)),
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: Stack(
+                      children: [
+                        Stack(
+                          children: [
+                            getMap(),
+                            Container(
+                                decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black54.withOpacity(0.55),
+                                  spreadRadius: 35,
+                                  blurRadius: 50,
+                                  offset: Offset(
+                                      0,
+                                      -(containerHeight *
+                                          0.7)), // changes position of shadow
+                                ),
+                              ],
+                            ))
+                          ],
+                        ),
+                        Container(
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.0)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ))),
             Center(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -55,72 +131,67 @@ class CheckIn extends StatelessWidget {
                         child: Column(
                           children: [
                             Container(
-                                height: containerHeight*0.5,
+                                height: containerHeight * 0.5,
                                 width: containerWidth,
                                 child: Center(
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.only(
+                                    child: ClipRRect(
+                                  borderRadius: BorderRadius.only(
                                       topLeft: Radius.circular(10),
-                                      topRight: Radius.circular(10),
-                                      bottomRight: Radius.circular(0),
-                                      bottomLeft: Radius.circular(0),
-                                    ),
-                                    child: Align(
-                                      alignment: Alignment.bottomRight,
-                                      heightFactor: 1,
-                                      widthFactor: 1,
-                                      child: GoogleMap(
-                                        mapType: MapType.normal,
-                                        initialCameraPosition: _kGooglePlex,
-                                        onMapCreated:
-                                            (GoogleMapController controller) {
-                                          _controller.complete(controller);
-                                          newGoogleMapController = controller;
-                                        },
-                                        scrollGesturesEnabled: false,
-                                        zoomControlsEnabled: false,
-                                        zoomGesturesEnabled: false,
-                                      ),
-                                    ),
-                                  ),
-                                )),
+                                      topRight: Radius.circular(10)),
+                                  child: getMap(),
+                                ))),
                             Padding(
                               padding: EdgeInsets.symmetric(vertical: 20),
-                              child:Text("Check-in Information",style:TextStyle(fontWeight: FontWeight.w600)),
+                              child: Text("Check-in Information",
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.w600)),
                             ),
                             Container(
-                                  width:
-                                      MediaQuery.of(context).size.width / 1.5,
-                                  child: Text(
-                                    "Location",
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w400,
-                                        color: Colors.black54),
-                                  )),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 5,bottom: 10),
-                              child: Container(
                                 width: MediaQuery.of(context).size.width / 1.5,
                                 child: Text(
-                                  "sdfsdfjsdfsdjfjsdhfsdgfshdfkhskhdfhksgfgslngjsfljlsgfjfsjljlsfgjlljljljdfghidfhghdfhghdhfghudfhghihhhi",
+                                  "Location",
                                   style: TextStyle(
-                                      fontSize: 12, color: Colors.black),
-                                ),
-                              ),
-                            ),
-                            Container(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.black54),
+                                )),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(top: 5, bottom: 10),
+                              child: Container(
                                   width:
                                       MediaQuery.of(context).size.width / 1.5,
-                                  child: Text(
-                                    "Date & Time",
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w400,
-                                        color: Colors.black54),
-                                  )),
+                                  child: FutureBuilder(
+                                      future: currentAddress(),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.hasData)
+                                          return Text(
+                                            snapshot.data,
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.black),
+                                          );
+                                        else
+                                          return SizedBox();
+                                      })
+                                  // child: Text(
+                                  //   "sdfsdfjsdfsdjfjsdhfsdgfshdfkhskhdfhksgfgslngjsfljlsgfjfsjljlsfgjlljljljdfghidfhghdfhghdhfghudfhghihhhi",
+                                  //   style: TextStyle(
+                                  //       fontSize: 12, color: Colors.black),
+                                  // ),
+                                  ),
+                            ),
+                            Container(
+                                width: MediaQuery.of(context).size.width / 1.5,
+                                child: Text(
+                                  "Date & Time",
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.black54),
+                                )),
                             Padding(
-                              padding: const EdgeInsets.only(top: 5,bottom: 5),
+                              padding: const EdgeInsets.only(top: 5, bottom: 5),
                               child: Container(
                                 width: MediaQuery.of(context).size.width / 1.5,
                                 child: Text(
@@ -187,18 +258,22 @@ class CheckIn extends StatelessWidget {
                   children: [
                     Padding(
                         padding: EdgeInsets.only(top: 60, left: 30),
-                        child: Icon(
-                          Icons.location_on_outlined,
-                          size: 30,
-                          color: Colors.white,
-                        )),
+                        child: FadeAnimation(
+                            1,
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 30,
+                              color: Colors.white,
+                            ))),
                     Padding(
                         padding: EdgeInsets.only(top: 60),
-                        child: Text(" Check-in",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 30))),
+                        child: FadeAnimation(
+                            1,
+                            Text(" Check-in",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 30)))),
                   ],
                 )),
           ],
