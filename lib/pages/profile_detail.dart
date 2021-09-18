@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:face_net_authentication/pages/utils/prefs.dart';
 import 'package:face_net_authentication/pages/editprofiledetails.dart';
-import 'package:face_net_authentication/pages/utils/Animation.dart';
 import 'package:page_transition/page_transition.dart';
 
 class ProfileDetailPage extends StatefulWidget {

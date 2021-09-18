@@ -1,13 +1,11 @@
 // A screen that allows users to take a picture using a given camera.
 import 'dart:async';
 import 'dart:io';
-import 'package:face_net_authentication/pages/widgets/FacePainter.dart';
-import 'package:face_net_authentication/pages/widgets/auth-action-button.dart';
-import 'package:face_net_authentication/pages/widgets/camera_header.dart';
+
+import 'package:face_net_authentication/pages/widgets/verification_button.dart';
 import 'package:face_net_authentication/services/camera.service.dart';
 import 'package:face_net_authentication/services/facenet.service.dart';
 import 'package:face_net_authentication/services/ml_kit_service.dart';
-import 'package:face_net_authentication/services/auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:face_net_authentication/pages/utils/animation.dart';
 import 'package:camera/camera.dart';
@@ -17,17 +15,23 @@ import 'dart:math' as math;
 
 class Verification extends StatefulWidget {
   final CameraDescription cameraDescription;
-
-  const Verification({
+  final double lt;
+  final double lg;
+  final String address;
+  const Verification(this.lt,this.lg,this.address,{
     Key key,
     @required this.cameraDescription,
   }) : super(key: key);
 
   @override
-  VerificationState createState() => VerificationState();
+  VerificationState createState() => VerificationState(lt,lg,address);
 }
 
 class VerificationState extends State<Verification> {
+  double lt;
+  double lg;
+  String address;
+  VerificationState(this.lt,this.lg,this.address);
   /// Service injection
   CameraService _cameraService = CameraService();
   MLKitService _mlKitService = MLKitService();
@@ -49,6 +53,7 @@ class VerificationState extends State<Verification> {
 
   @override
   void initState() {
+    
     super.initState();
 
     /// starts the camera & start framing faces
@@ -94,7 +99,7 @@ class VerificationState extends State<Verification> {
           List<Face> faces = await _mlKitService.getFacesFromImage(image);
 
           if (faces != null) {
-            print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
             if (faces.length > 0) {
               // preprocessing the image
               setState(() {
@@ -310,8 +315,11 @@ class VerificationState extends State<Verification> {
           ? AuthActionButton(
               _initializeControllerFuture,
               onPressed: onShot,
-              isLogin: true,
+              isCheckin: true,
               reload: _reload,
+              lt:lt,
+              lg:lg,
+              address:address
             )
           : Container(),
     );

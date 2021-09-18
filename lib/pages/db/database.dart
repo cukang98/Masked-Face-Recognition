@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:face_net_authentication/pages/utils/prefs.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:intl/intl.dart';
 
 class DataBaseService {
   // singleton boilerplate
@@ -20,10 +22,12 @@ class DataBaseService {
   Future loadDB() async {
     databaseRef.once().then((DataSnapshot snapshot) {
       //print("Data2:"+snapshot.value.toString());
-      List <String>users = [];
+      List<String> users = [];
       Map<dynamic, dynamic> values = snapshot.value;
       values.forEach((key, values) {
-        users.add(('{"' + key.toString() + '":' + values.toString()+ "}").toString());
+        if (key.toString().contains(":"))
+          users.add(('{"' + key.toString() + '":' + values.toString() + "}")
+              .toString());
       });
       _db = json.decode((users.join(",")));
     });
@@ -37,9 +41,21 @@ class DataBaseService {
     databaseRef.child(userAndPass).set(modelData);
   }
 
+  void saveLocation(String email, double lt, double lg, String address) {
+    DateTime now = DateTime.now();
+    String emailBase64 = base64.encode(utf8.encode(email));
+    String formattedDate = DateFormat('E yyyy/MM/dd KK:mma').format(now);
+    List data;
+        databaseRef
+        .child(emailBase64)
+        .push()
+        .set({"address": address, "lt": lt, "lg": lg, "date": formattedDate});
+  }
+
   /// deletes the created users
   cleanDB() {
     this._db = Map<String, dynamic>();
     databaseRef.remove();
   }
+
 }

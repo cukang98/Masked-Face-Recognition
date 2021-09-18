@@ -7,6 +7,7 @@ import 'package:face_net_authentication/pages/widgets/app_button.dart';
 import 'package:face_net_authentication/pages/utils/animation.dart';
 import 'package:face_net_authentication/pages/utils/assistantmethods.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:page_transition/page_transition.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
@@ -31,13 +32,15 @@ class CheckInState extends State<CheckIn> {
 
   GoogleMapController newGoogleMapController;
   Position currentPosition;
+  String currentPositionAddress;
   CameraPosition cameraPosition;
+
   @override
   void initState() {
     super.initState();
     _startUp();
   }
-  
+
   _startUp() async {
     _setLoading(true);
 
@@ -67,6 +70,7 @@ class CheckInState extends State<CheckIn> {
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.best);
     LatLng latLatPosition = LatLng(position.latitude, position.longitude);
+    currentPosition = position;
     cameraPosition = new CameraPosition(target: latLatPosition, zoom: 18);
     return cameraPosition;
   }
@@ -74,6 +78,7 @@ class CheckInState extends State<CheckIn> {
   Future<String> currentAddress() async {
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.best);
+    currentPositionAddress = await AssistantMethods.searchCoordinateAddress(position);
     return AssistantMethods.searchCoordinateAddress(position);
   }
 
@@ -113,6 +118,13 @@ class CheckInState extends State<CheckIn> {
         body: Stack(
           children: [
             Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+            decoration: BoxDecoration(
+                color: Color.fromRGBO(13, 220, 230, 1)),
+            height: MediaQuery.of(context).size.height,
+          )),
+            Align(
                 alignment: Alignment.topCenter,
                 child: Container(
                     height: MediaQuery.of(context).size.height * 0.5,
@@ -120,6 +132,7 @@ class CheckInState extends State<CheckIn> {
                       children: [
                         Stack(
                           children: [
+                            
                             getMap(),
                             Container(
                                 decoration: BoxDecoration(
@@ -134,7 +147,8 @@ class CheckInState extends State<CheckIn> {
                                           0.7)), // changes position of shadow
                                 ),
                               ],
-                            ))
+                            )),
+                            
                           ],
                         ),
                         Container(
@@ -254,16 +268,8 @@ class CheckInState extends State<CheckIn> {
                 ],
               ),
             ),
-            Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height / 7,
-                  ),
-                ],
-              ),
-            ),
+
+            
 
             // Align(
             //     alignment: Alignment.topCenter,
@@ -321,6 +327,7 @@ class CheckInState extends State<CheckIn> {
                                     fontSize: 30)))),
                   ],
                 )),
+                
           ],
         ),
         bottomNavigationBar: BottomAppBar(
@@ -342,13 +349,16 @@ class CheckInState extends State<CheckIn> {
                             AppButton(
                               text: "Check In",
                               onPressed: () {
+                                Navigator.pop(context);
+                                
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (BuildContext context) =>
-                                        Verification(
+                                  PageTransition(
+                                    type: PageTransitionType.rightToLeft,
+                                    child:Verification(currentPosition.latitude,currentPosition.longitude,currentPositionAddress,
                                       cameraDescription: cameraDescription,
-                                    ),
+                                    
+                                        ),
                                   ),
                                 );
                               },
