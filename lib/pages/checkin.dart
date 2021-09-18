@@ -11,11 +11,56 @@ import 'package:shimmer_animation/shimmer_animation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:face_net_authentication/services/facenet.service.dart';
+import 'package:face_net_authentication/services/ml_kit_service.dart';
+import 'package:face_net_authentication/pages/db/database.dart';
+import 'package:face_net_authentication/pages/verification.dart';
+import 'package:camera/camera.dart';
 
-class CheckIn extends StatelessWidget {
+class CheckIn extends StatefulWidget{
+  CheckInState createState() => CheckInState();
+}
+
+class CheckInState extends State<CheckIn> {
+  // Services injection
+  FaceNetService _faceNetService = FaceNetService();
+  MLKitService _mlKitService = MLKitService();
+  DataBaseService _dataBaseService = DataBaseService();
+  CameraDescription cameraDescription;
+  bool loading = false;
+
   GoogleMapController newGoogleMapController;
   Position currentPosition;
   CameraPosition cameraPosition;
+  @override
+  void initState() {
+    super.initState();
+    _startUp();
+  }
+  
+  _startUp() async {
+    _setLoading(true);
+
+    List<CameraDescription> cameras = await availableCameras();
+
+    /// takes the front camera
+    cameraDescription = cameras.firstWhere(
+      (CameraDescription camera) =>
+          camera.lensDirection == CameraLensDirection.front,
+    );
+
+    // start the services
+    await _faceNetService.loadModel();
+    await _dataBaseService.loadDB();
+    _mlKitService.initialize();
+
+    _setLoading(false);
+  }
+
+  // shows or hides the circular progress indicator
+  _setLoading(bool value) {
+    loading = value;
+  }
 
   Future<CameraPosition> currentLocation() async {
     EasyLoading.show();
@@ -300,7 +345,11 @@ class CheckIn extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => CheckIn()),
+                                    builder: (BuildContext context) =>
+                                        Verification(
+                                      cameraDescription: cameraDescription,
+                                    ),
+                                  ),
                                 );
                               },
                               icon: Icon(

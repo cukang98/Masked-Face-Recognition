@@ -58,29 +58,34 @@ class _ProfileDetailState extends State<ProfileDetailPage> {
                   future: getUserImagePath(),
                   builder:
                       (BuildContext context, AsyncSnapshot<String> snapshot) {
-                    Widget container = Container(
-                      width: 130,
-                      height: 130,
-                      decoration: BoxDecoration(
-                          border: Border.all(
-                              width: 4,
-                              color: Theme.of(context).scaffoldBackgroundColor),
-                          boxShadow: [
-                            BoxShadow(
-                                spreadRadius: 2,
-                                blurRadius: 10,
-                                color: Colors.black.withOpacity(0.1),
-                                offset: Offset(0, 10))
-                          ],
-                          shape: BoxShape.circle,
-                          image: DecorationImage(
-                              fit: BoxFit.cover,
-                              image: FileImage(
-                                File(snapshot.data),
-                              ))),
-                    );
+                    if (snapshot.hasData) {
+                      Widget container = Container(
+                        width: 130,
+                        height: 130,
+                        decoration: BoxDecoration(
+                            border: Border.all(
+                                width: 4,
+                                color:
+                                    Theme.of(context).scaffoldBackgroundColor),
+                            boxShadow: [
+                              BoxShadow(
+                                  spreadRadius: 2,
+                                  blurRadius: 10,
+                                  color: Colors.black.withOpacity(0.1),
+                                  offset: Offset(0, 10))
+                            ],
+                            shape: BoxShape.circle,
+                            image: DecorationImage(
+                                fit: BoxFit.cover,
+                                image: FileImage(
+                                  File(snapshot.data),
+                                ))),
+                      );
 
-                    return container;
+                      return container;
+                    } else {
+                      return CircularProgressIndicator();
+                    }
                   },
                 ),
               ),
@@ -96,20 +101,26 @@ class _ProfileDetailState extends State<ProfileDetailPage> {
                 future: getUserName(),
                 builder:
                     (BuildContext context, AsyncSnapshot<String> snapshot) {
-                  Widget container =
-                      buildTextField("Full Name", snapshot.data, false);
-
-                  return container;
+                  if (snapshot.hasData) {
+                    Widget container =
+                        buildTextField("Full Name", snapshot.data, false);
+                    return container;
+                  } else {
+                    return CircularProgressIndicator();
+                  }
                 },
               ),
               FutureBuilder(
                 future: getUserEmail(),
                 builder:
                     (BuildContext context, AsyncSnapshot<String> snapshot) {
-                  Widget container =
-                      buildTextField("Email", snapshot.data, false);
-
-                  return container;
+                  if (snapshot.hasData) {
+                    Widget container =
+                        buildTextField("Email", snapshot.data, false);
+                    return container;
+                  } else {
+                    return CircularProgressIndicator();
+                  }
                 },
               ),
               SizedBox(
@@ -152,7 +163,9 @@ class _ProfileDetailState extends State<ProfileDetailPage> {
         onTap: () {
           Navigator.push(
             context,
-            PageTransition(type: PageTransitionType.rightToLeft,child: EditProfileDetail(labelText,isPasswordTextField)),
+            PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: EditProfileDetail(labelText, isPasswordTextField)),
           );
         });
   }

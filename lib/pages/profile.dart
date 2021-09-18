@@ -3,8 +3,9 @@ import 'dart:io';
 import 'package:face_net_authentication/pages/widgets/app_button.dart';
 import 'package:face_net_authentication/pages/profile_detail.dart';
 import 'package:face_net_authentication/pages/checkin.dart';
+import 'package:face_net_authentication/pages/home.dart';
 import 'package:flutter/material.dart';
-
+import 'package:cool_alert/cool_alert.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
 class Profile extends StatelessWidget {
@@ -70,7 +71,6 @@ class Profile extends StatelessWidget {
                         builder: (context) => ProfileDetailPage()),
                   );
                   // Then close the drawer
-                  
                 },
               ),
               ListTile(
@@ -88,10 +88,22 @@ class Profile extends StatelessWidget {
                 leading: Icon(Icons.power_settings_new),
                 title: Text("Logout"),
                 onTap: () {
-                  // Update the state of the app
-                  // ...
-                  // Then close the drawer
-                  Navigator.pop(context);
+                  CoolAlert.show(
+                      context: context,
+                      type: CoolAlertType.confirm,
+                      text: 'Do you want to logout',
+                      confirmBtnText: 'Yes',
+                      cancelBtnText: 'No',
+                      confirmBtnColor: Colors.green,
+                      onConfirmBtnTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => MyHomePage()),
+                        );
+                      });
+                  //Navigator.pop(context);
                 },
               ),
             ],

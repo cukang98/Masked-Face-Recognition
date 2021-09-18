@@ -11,7 +11,7 @@ class AssistantMethods{
 
     if(response != null){
       inspect(response['address']['road']);
-      placeAddress = "${response['address']['road']}, ${response['address']['suburb']}, ${response['address']['region']}, ${response['address']['state']}";
+      placeAddress = "${response['address']['road']}, ${response['address']['suburb']}, ${response['address']['district']}, ${response['address']['state']}";
     }
     return placeAddress;
   }
