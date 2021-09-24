@@ -1,5 +1,5 @@
 import 'dart:ui';
-
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
@@ -18,7 +18,7 @@ import 'package:face_net_authentication/pages/db/database.dart';
 import 'package:face_net_authentication/pages/verification.dart';
 import 'package:camera/camera.dart';
 
-class CheckIn extends StatefulWidget{
+class CheckIn extends StatefulWidget {
   CheckInState createState() => CheckInState();
 }
 
@@ -78,7 +78,8 @@ class CheckInState extends State<CheckIn> {
   Future<String> currentAddress() async {
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.best);
-    currentPositionAddress = await AssistantMethods.searchCoordinateAddress(position);
+    currentPositionAddress =
+        await AssistantMethods.searchCoordinateAddress(position);
     return AssistantMethods.searchCoordinateAddress(position);
   }
 
@@ -120,10 +121,10 @@ class CheckInState extends State<CheckIn> {
             Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
-            decoration: BoxDecoration(
-                color: Color.fromRGBO(13, 220, 230, 1)),
-            height: MediaQuery.of(context).size.height,
-          )),
+                  decoration:
+                      BoxDecoration(color: Color.fromARGB(170, 108, 96, 225)),
+                  height: MediaQuery.of(context).size.height,
+                )),
             Align(
                 alignment: Alignment.topCenter,
                 child: Container(
@@ -132,13 +133,13 @@ class CheckInState extends State<CheckIn> {
                       children: [
                         Stack(
                           children: [
-                            
                             getMap(),
                             Container(
                                 decoration: BoxDecoration(
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black54.withOpacity(0.55),
+                                  color: Color.fromRGBO(255, 242, 200, 1)
+                                      .withOpacity(0.8),
                                   spreadRadius: 35,
                                   blurRadius: 50,
                                   offset: Offset(
@@ -148,7 +149,6 @@ class CheckInState extends State<CheckIn> {
                                 ),
                               ],
                             )),
-                            
                           ],
                         ),
                         Container(
@@ -269,8 +269,6 @@ class CheckInState extends State<CheckIn> {
               ),
             ),
 
-            
-
             // Align(
             //     alignment: Alignment.topCenter,
             //     child: Container(
@@ -294,11 +292,10 @@ class CheckInState extends State<CheckIn> {
                   padding:
                       EdgeInsets.only(top: 3, bottom: 3, left: 10, right: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Color.fromRGBO(229, 169, 90, 1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child:
-                      Text("close", style: TextStyle(color: Color(0xFFFF6161))),
+                  child: Text("close", style: TextStyle(color: Colors.white)),
                 ),
               ),
             ),
@@ -314,20 +311,21 @@ class CheckInState extends State<CheckIn> {
                             Icon(
                               Icons.location_on_outlined,
                               size: 30,
-                              color: Colors.white,
+                              color: Color.fromRGBO(229, 169, 90, 1),
                             ))),
                     Padding(
                         padding: EdgeInsets.only(top: 60),
                         child: FadeAnimation(
                             1,
                             Text(" Check-in",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 30)))),
+                                style: GoogleFonts.rubik(
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.w600,
+                                    textStyle: TextStyle(
+                                      color: Color.fromRGBO(229, 169, 90, 1),
+                                    )))))
                   ],
                 )),
-                
           ],
         ),
         bottomNavigationBar: BottomAppBar(
@@ -350,15 +348,17 @@ class CheckInState extends State<CheckIn> {
                               text: "Check In",
                               onPressed: () {
                                 Navigator.pop(context);
-                                
+
                                 Navigator.push(
                                   context,
                                   PageTransition(
                                     type: PageTransitionType.rightToLeft,
-                                    child:Verification(currentPosition.latitude,currentPosition.longitude,currentPositionAddress,
+                                    child: Verification(
+                                      currentPosition.latitude,
+                                      currentPosition.longitude,
+                                      currentPositionAddress,
                                       cameraDescription: cameraDescription,
-                                    
-                                        ),
+                                    ),
                                   ),
                                 );
                               },
@@ -366,7 +366,7 @@ class CheckInState extends State<CheckIn> {
                                 Icons.logout,
                                 color: Colors.white,
                               ),
-                              color: Color(0xFFFF6161),
+                              color: Color.fromARGB(170, 108, 96, 225),
                             )
                           ],
                         ),

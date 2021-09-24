@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:face_net_authentication/pages/utils/app_theme.dart';
 class AppButton extends StatelessWidget {
   AppButton(
       {this.onPressed,
@@ -20,7 +20,7 @@ class AppButton extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: color,
+          color: AppTheme.mainColorDark,
           boxShadow: <BoxShadow>[
             BoxShadow(
               color: Colors.blue.withOpacity(0.1),

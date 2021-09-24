@@ -61,7 +61,7 @@ class _AuthActionButtonState extends State<AuthActionButton> {
                   _dataBaseService.saveLocation(
                       email, widget.lt, widget.lg, widget.address);
                   Navigator.pop(context);
-
+  
                   Navigator.push(
                       context,
                       PageTransition(

@@ -1,9 +1,8 @@
 import 'dart:ui';
-
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
-import 'package:face_net_authentication/pages/widgets/app_button.dart';
 import 'package:face_net_authentication/pages/utils/animation.dart';
 import 'package:face_net_authentication/pages/utils/assistantmethods.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -14,7 +13,6 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:face_net_authentication/services/facenet.service.dart';
 import 'package:face_net_authentication/services/ml_kit_service.dart';
 import 'package:face_net_authentication/pages/db/database.dart';
-import 'package:face_net_authentication/pages/verification.dart';
 import 'package:camera/camera.dart';
 
 class CheckInSuccess extends StatefulWidget {
@@ -273,16 +271,25 @@ class CheckInSuccessState extends State<CheckInSuccess> {
                       padding: EdgeInsets.only(top: 60, left: 30),
                       child: FadeAnimation(
                           1,
-                          Image.asset('assets/tick.png',width: 45,))),
+                          Image.asset(
+                            'assets/tick.png',
+                            width: 35,
+                          ))),
                   Padding(
                       padding: EdgeInsets.only(top: 60),
                       child: FadeAnimation(
                           1,
                           Text("  Success",
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 30)))),
+                              style: GoogleFonts.rubik(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.w600,
+                                  textStyle:
+                                      TextStyle(color: Colors.white, shadows: [
+                                    Shadow(
+                                        color: Colors.black.withOpacity(0.3),
+                                        offset: Offset(5, 5),
+                                        blurRadius: 15),
+                                  ]))))),
                 ],
               )),
         ],

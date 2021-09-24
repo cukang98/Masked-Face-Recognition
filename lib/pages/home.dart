@@ -3,6 +3,7 @@ import 'package:face_net_authentication/pages/sign-in.dart';
 import 'package:face_net_authentication/pages/sign-up.dart';
 import 'package:face_net_authentication/services/facenet.service.dart';
 import 'package:face_net_authentication/services/ml_kit_service.dart';
+import 'package:face_net_authentication/pages/utils/app_theme.dart';
 import 'utils/animation.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -67,36 +68,36 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 250, 250, 250),
+      backgroundColor: AppTheme.mainColorLight,
       appBar: AppBar(
         leading: Container(),
         elevation: 0,
         backgroundColor: Colors.transparent,
         actions: <Widget>[
-          Padding(
-            padding: EdgeInsets.only(right: 20, top: 20),
-            child: PopupMenuButton<String>(
-              child: Icon(
-                Icons.more_vert,
-                color: Colors.black,
-              ),
-              onSelected: (value) {
-                switch (value) {
-                  case 'Clear DB':
-                    _dataBaseService.cleanDB();
-                    break;
-                }
-              },
-              itemBuilder: (BuildContext context) {
-                return {'Clear DB'}.map((String choice) {
-                  return PopupMenuItem<String>(
-                    value: choice,
-                    child: Text(choice),
-                  );
-                }).toList();
-              },
-            ),
-          ),
+          // Padding(
+          //   padding: EdgeInsets.only(right: 20, top: 20),
+          //   child: PopupMenuButton<String>(
+          //     child: Icon(
+          //       Icons.more_vert,
+          //       color: Colors.black,
+          //     ),
+          //     onSelected: (value) {
+          //       switch (value) {
+          //         case 'Clear DB':
+          //           _dataBaseService.cleanDB();
+          //           break;
+          //       }
+          //     },
+          //     itemBuilder: (BuildContext context) {
+          //       return {'Clear DB'}.map((String choice) {
+          //         return PopupMenuItem<String>(
+          //           value: choice,
+          //           child: Text(choice),
+          //         );
+          //       }).toList();
+          //     },
+          //   ),
+          // ),
         ],
       ),
       drawer:Drawer(),
@@ -110,8 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         1,
                         Text(
                           "Welcome",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 27),
+                          style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold)
                         )),
                     FadeAnimation(
                       1.2,
@@ -147,7 +147,6 @@ class _MyHomePageState extends State<MyHomePage> {
                           },
                           child: Container(
                             decoration: BoxDecoration(
-                              border: Border.all(width: 1.0),
                               borderRadius: BorderRadius.circular(50),
                               color: Colors.white,
                               boxShadow: <BoxShadow>[
@@ -196,9 +195,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           },
                           child: Container(
                             decoration: BoxDecoration(
-                              border: Border.all(width: 1.0),
                               borderRadius: BorderRadius.circular(50),
-                              color: Color(0xFFFF6161),
+                              color: AppTheme.mainColorDark,
                               boxShadow: <BoxShadow>[
                                 BoxShadow(
                                   color: Colors.blue.withOpacity(0.1),
@@ -223,13 +221,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           ),
                         ),
-                        SizedBox(
-                          height: 20,
-                          width: MediaQuery.of(context).size.width * 0.8,
-                          child: Divider(
-                            thickness: 2,
-                          ),
-                        ),
+
+                  
                       ],
                     )
                   ],

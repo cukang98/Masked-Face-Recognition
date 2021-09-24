@@ -11,6 +11,7 @@ import 'package:face_net_authentication/pages/utils/animation.dart';
 import 'package:camera/camera.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:math' as math;
 
 class Verification extends StatefulWidget {
@@ -186,8 +187,9 @@ class VerificationState extends State<Verification> {
         ),
         title: Text(
           "Identity Verification",
-          style: TextStyle(
+          style: GoogleFonts.nunito(
             color: Colors.white,
+            fontWeight: FontWeight.w900,
           ),
         ),
       ),
@@ -288,8 +290,8 @@ class VerificationState extends State<Verification> {
                     Text(
                       "Verification",
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.roboto(
-                          fontWeight: FontWeight.w700,
+                      style: GoogleFonts.nunito(
+                          fontWeight: FontWeight.w800,
                           fontSize: 30
                           
                           ,
