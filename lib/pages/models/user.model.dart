@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 
 class User {
@@ -7,6 +9,6 @@ class User {
   User({@required this.user, @required this.password});
 
   static User fromDB(String dbuser) {
-    return new User(user: dbuser.split(':')[0], password: dbuser.split(':')[1]);
+    return new User(user: dbuser.toString().split(':')[0], password: dbuser.toString().split(':')[1]);
   }
 }

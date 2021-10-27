@@ -321,7 +321,8 @@ class VerificationState extends State<Verification> {
               reload: _reload,
               lt:lt,
               lg:lg,
-              address:address
+              address:address,
+              context:context
             )
           : Container(),
     );

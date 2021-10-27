@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
@@ -8,6 +10,7 @@ import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:image/image.dart' as imglib;
+import 'package:http/http.dart' as http;
 
 class FaceNetService {
   // singleton boilerplate
@@ -22,14 +25,11 @@ class FaceNetService {
   DataBaseService _dataBaseService = DataBaseService();
 
   Interpreter _interpreter;
-
+  Map<String, dynamic> data = Map<String, dynamic>();
   double threshold = 1.5;
 
   List _predictedData;
   List get predictedData => this._predictedData;
-
-  //  saved users data
-  dynamic data = {};
 
   Future loadModel() async {
     Delegate delegate;
@@ -67,7 +67,7 @@ class FaceNetService {
     input = input.reshape([1, 112, 112, 3]);
     List output = List.generate(1, (index) => List.filled(192, 0));
 
-    /// runs and transforms the data 
+    /// runs and transforms the data
     this._interpreter.run(input, output);
     output = output.reshape([192]);
 
@@ -75,7 +75,7 @@ class FaceNetService {
   }
 
   /// takes the predicted data previously saved and do inference
-  String predict() {
+  Future predict() {
     /// search closer user prediction if exists
     return _searchResult(this._predictedData);
   }
@@ -85,7 +85,7 @@ class FaceNetService {
   /// [cameraImage]: current image
   /// [face]: face detected
   List _preProcess(CameraImage image, Face faceDetected) {
-    // crops the face 
+    // crops the face
     imglib.Image croppedImage = _cropFace(image, faceDetected);
     imglib.Image img = imglib.copyResizeCropSquare(croppedImage, 112);
 
@@ -94,7 +94,7 @@ class FaceNetService {
     return imageAsList;
   }
 
-  /// crops the face from the image 
+  /// crops the face from the image
   /// [cameraImage]: current image
   /// [face]: face detected
   imglib.Image _cropFace(CameraImage image, Face faceDetected) {
@@ -137,18 +137,23 @@ class FaceNetService {
 
   /// searchs the result in the DDBB (this function should be performed by Backend)
   /// [predictedData]: Array that represents the face by the MobileFaceNet model
-  String _searchResult(List predictedData) {
-    Map<String, dynamic> data = _dataBaseService.db;
+  Future _searchResult(List predictedData) async {
+    dynamic data;
+    String predRes;
 
-    /// if no faces saved
+    final response = await http.get(
+        Uri.parse('https://final-year-project-9e674.firebaseio.com/.json'));
+    data = jsonDecode(response.body);
     if (data?.length == 0) return null;
     double minDist = 999;
     double currDist = 0.0;
-    String predRes;
 
-    /// search the closest result 
+    /// search the closest result
     for (String label in data.keys) {
-      currDist = _euclideanDistance(data[label], predictedData);
+      if (!label.contains(":"))
+        continue;
+      else
+        currDist = _euclideanDistance(data[label], predictedData);
       if (currDist <= threshold && currDist < minDist) {
         minDist = currDist;
         predRes = label;
@@ -158,7 +163,7 @@ class FaceNetService {
   }
 
   /// Adds the power of the difference between each point
-  /// then computes the sqrt of the result 
+  /// then computes the sqrt of the result
   double _euclideanDistance(List e1, List e2) {
     if (e1 == null || e2 == null) throw Exception("Null argument");
 

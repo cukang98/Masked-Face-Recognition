@@ -13,15 +13,15 @@ class DataBaseService {
   }
   // singleton boilerplate
   DataBaseService._internal();
-
+  
   /// Data learned on memory
   Map<String, dynamic> _db = Map<String, dynamic>();
   Map<String, dynamic> get db => this._db;
 
   /// loads data from real time database
   Future loadDB() async {
+
     databaseRef.once().then((DataSnapshot snapshot) {
-      //print("Data2:"+snapshot.value.toString());
       List<String> users = [];
       Map<dynamic, dynamic> values = snapshot.value;
       values.forEach((key, values) {
@@ -30,7 +30,9 @@ class DataBaseService {
               .toString());
       });
       _db = json.decode((users.join(",")));
+      return json.decode((users.join(",")));
     });
+    return _db;
   }
 
   /// [Name]: name of the new user

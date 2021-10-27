@@ -17,7 +17,8 @@ class AuthActionButton extends StatefulWidget {
       this.reload,
       this.lt,
       this.lg,
-      this.address});
+      this.address,
+      this.context});
   final Future _initializeControllerFuture;
   final Function onPressed;
   final bool isCheckin;
@@ -25,6 +26,7 @@ class AuthActionButton extends StatefulWidget {
   final double lt;
   final double lg;
   final String address;
+  final BuildContext context;
   @override
   _AuthActionButtonState createState() => _AuthActionButtonState();
 }
@@ -36,8 +38,8 @@ class _AuthActionButtonState extends State<AuthActionButton> {
   final CameraService _cameraService = CameraService();
   User predictedUser;
 
-  String _predictUser() {
-    String userAndPass = _faceNetService.predict();
+  Future _predictUser() async {
+    String userAndPass = await _faceNetService.predict();
     return userAndPass ?? null;
   }
 
@@ -54,21 +56,24 @@ class _AuthActionButtonState extends State<AuthActionButton> {
           String email = await getUserEmail();
           if (faceDetected) {
             if (widget.isCheckin) {
-              var userAndPass = _predictUser();
-              if (userAndPass != null) {
+              var userAndPass = "";
+              _predictUser().then((value) {
+                userAndPass = value;
+                print(userAndPass);
+
                 this.predictedUser = User.fromDB(userAndPass);
+
                 if (predictedUser.user == username) {
                   _dataBaseService.saveLocation(
                       email, widget.lt, widget.lg, widget.address);
-                  Navigator.pop(context);
-  
+                  Navigator.pop(widget.context);
                   Navigator.push(
-                      context,
+                      widget.context,
                       PageTransition(
                           type: PageTransitionType.rightToLeft,
                           child: CheckInSuccess()));
                 }
-              }
+              });
             }
           }
         } catch (e) {

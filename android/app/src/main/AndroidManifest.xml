@@ -14,7 +14,7 @@
     
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="FaceNet"
+        android:label="MaskedFace_Recognition"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

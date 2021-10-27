@@ -8,7 +8,9 @@ import 'package:face_net_authentication/services/camera.service.dart';
 import 'package:face_net_authentication/services/facenet.service.dart';
 import 'package:face_net_authentication/services/auth.dart';
 import 'package:face_net_authentication/pages/utils/prefs.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/material.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import '../home.dart';
 import 'app_text_field.dart';
 
@@ -34,7 +36,17 @@ class _AuthActionButtonState extends State<AuthActionButton> {
       TextEditingController(text: '');
   final TextEditingController _emailTextEditingController =
       TextEditingController(text: '');
+  final TextEditingController _emailController = TextEditingController();
   User predictedUser;
+  void _resetPassword(email) async {
+    firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
+    await _auth
+        .sendPasswordResetEmail(email: email)
+        .then((value) {})
+        .catchError((err) {
+      print(err);
+    });
+  }
 
   Future _signUp(context) async {
     /// gets predicted data from facenet service (user face detected)
@@ -80,7 +92,8 @@ class _AuthActionButtonState extends State<AuthActionButton> {
       FocusScope.of(context).requestFocus(new FocusNode());
     }
     if (_token != null) {
-      print(_emailTextEditingController.text + _passwordTextEditingController.text);
+      print(_emailTextEditingController.text +
+          _passwordTextEditingController.text);
       setUserEmail(this._emailTextEditingController.text);
       setUserName(this.predictedUser.user);
       setUserImagePath(_cameraService.imagePath);
@@ -92,8 +105,7 @@ class _AuthActionButtonState extends State<AuthActionButton> {
                     this.predictedUser.user,
                     imagePath: _cameraService.imagePath,
                   )));
-
-    }else {
+    } else {
       showDialog(
         context: context,
         builder: (context) {
@@ -105,8 +117,8 @@ class _AuthActionButtonState extends State<AuthActionButton> {
     }
   }
 
-  String _predictUser() {
-    String userAndPass = _faceNetService.predict();
+  Future _predictUser() async {
+    String userAndPass = await _faceNetService.predict();
     return userAndPass ?? null;
   }
 
@@ -122,10 +134,11 @@ class _AuthActionButtonState extends State<AuthActionButton> {
 
           if (faceDetected) {
             if (widget.isLogin) {
-              var userAndPass = _predictUser();
-              if (userAndPass != null) {
-                this.predictedUser = User.fromDB(userAndPass);
-              }
+              var userAndPass = "";
+              // _predictUser().then((value) {
+              //   userAndPass = value;
+              //   this.predictedUser = User.fromDB(userAndPass);
+              // });
             }
             PersistentBottomSheetController bottomSheetController =
                 Scaffold.of(context)
@@ -169,81 +182,170 @@ class _AuthActionButtonState extends State<AuthActionButton> {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          widget.isLogin && predictedUser != null
-              ? Container(
-                  child: Text(
-                    'Welcome back, ' + predictedUser.user + '.',
-                    style: TextStyle(fontSize: 20),
-                  ),
-                )
-              : widget.isLogin
-                  ? Container(
-                      child: Text(
-                      'Please try again',
-                      style: TextStyle(fontSize: 20),
-                    ))
-                  : Container(),
-          Container(
-            child: Column(
-              children: [
-                !widget.isLogin
-                    ? AppTextField(
-                        controller: _userTextEditingController,
-                        labelText: "Full Name",
-                      )
-                    : Container(),
-                SizedBox(height: 10),
-                widget.isLogin && predictedUser == null
-                    ? Container()
-                    : AppTextField(
-                        controller: _emailTextEditingController,
-                        labelText: "Email",
-                      ),
-                SizedBox(height: 10),
-                widget.isLogin && predictedUser == null
-                    ? Container()
-                    : AppTextField(
-                        controller: _passwordTextEditingController,
-                        labelText: "Password",
-                        isPassword: true,
-                      ),
-                Divider(),
-                SizedBox(height: 10),
-                widget.isLogin && predictedUser != null
-                    ? AppButton(
-                        text: 'Login',
-                        onPressed: () async {
-                          _signIn(context);
-                        },
-                        color: Color(0xFFFF6161),
-                        icon: Icon(
-                          Icons.login,
-                          color: Colors.white,
-                        ),
-                      )
-                    : !widget.isLogin
-                        ? AppButton(
-                            text: 'Sign Up',
-                            onPressed: () async {
-                              await _signUp(context);
-                            },
-                            color: Color(0xFFFF6161),
-                            icon: Icon(
-                              Icons.person_add,
-                              color: Colors.white,
+          FutureBuilder(
+                  future: _predictUser(),
+                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Container(
+                              child: Text(
+                                'Plese Wait ...',
+                                style: TextStyle(fontSize: 20),
+                              ),
                             ),
-                          )
-                        : Container(),
-              ],
-            ),
-          ),
+                          ]);
+                    } else {
+                      this.predictedUser = User.fromDB(snapshot.data);
+                      return snapshot.hasData
+                          ? Column(children: [
+                            widget.isLogin?
+                              Container(
+                                child: Text(
+                                  'Welcome back, ' + predictedUser.user + '.',
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                              ):Container(),
+                              Container(
+                                child: Column(
+                                  children: [
+                                    !widget.isLogin
+                                        ? AppTextField(
+                                            controller:
+                                                _userTextEditingController,
+                                            labelText: "Full Name",
+                                          )
+                                        : Container(),
+                                    SizedBox(height: 10),
+                                    widget.isLogin && predictedUser == null
+                                        ? Container()
+                                        : AppTextField(
+                                            controller:
+                                                _emailTextEditingController,
+                                            labelText: "Email",
+                                          ),
+                                    SizedBox(height: 10),
+                                    widget.isLogin && predictedUser == null
+                                        ? Container()
+                                        : AppTextField(
+                                            controller:
+                                                _passwordTextEditingController,
+                                            labelText: "Password",
+                                            isPassword: true,
+                                          ),
+                                    Divider(),
+                                    !widget.isLogin
+                                        ? Container()
+                                        : InkWell(
+                                            onTap: () {
+                                              return showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (currentPassowrdContext) {
+                                                    return AlertDialog(
+                                                      title: Text(
+                                                          'Reset Password'),
+                                                      content: TextField(
+                                                        controller:
+                                                            _emailController,
+                                                        textInputAction:
+                                                            TextInputAction.go,
+                                                        keyboardType: TextInputType
+                                                            .numberWithOptions(),
+                                                        decoration: InputDecoration(
+                                                            hintText:
+                                                                "Enter email address"),
+                                                      ),
+                                                      actions: <Widget>[
+                                                        new TextButton(
+                                                          child: new Text(
+                                                              'Submit'),
+                                                          onPressed: () {
+                                                            _resetPassword(
+                                                                _emailController
+                                                                    .text);
+                                                            Navigator.of(
+                                                                    currentPassowrdContext)
+                                                                .pop();
+                                                            Widget okButton =
+                                                                TextButton(
+                                                              child: Text("OK"),
+                                                              onPressed: () {
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pop();
+                                                              },
+                                                            );
+                                                            AlertDialog alert =
+                                                                AlertDialog(
+                                                              title: Text(
+                                                                  "Password Reset Link Sent"),
+                                                              content: Text(
+                                                                  "An password reset link has been sent to your email."),
+                                                              actions: [
+                                                                okButton
+                                                              ],
+                                                            );
+                                                            showDialog(
+                                                              context: context,
+                                                              builder:
+                                                                  (BuildContext
+                                                                      context) {
+                                                                return alert;
+                                                              },
+                                                            );
+                                                          },
+                                                        )
+                                                      ],
+                                                    );
+                                                  });
+                                            },
+                                            child: Text(
+                                                "Forgot Password? Click Me",
+                                                style: TextStyle(
+                                                    color: Colors.red))),
+                                    SizedBox(height: 10),
+                                    widget.isLogin && predictedUser != null
+                                        ? AppButton(
+                                            text: 'Login',
+                                            onPressed: () async {
+                                              _signIn(context);
+                                            },
+                                            color: Color(0xFFFF6161),
+                                            icon: Icon(
+                                              Icons.login,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : !widget.isLogin
+                                            ? AppButton(
+                                                text: 'Sign Up',
+                                                onPressed: () async {
+                                                  await _signUp(context);
+                                                },
+                                                color: Color(0xFFFF6161),
+                                                icon: Icon(
+                                                  Icons.person_add,
+                                                  color: Colors.white,
+                                                ),
+                                              )
+                                            : Container(),
+                                  ],
+                                ),
+                              )
+                            ])
+                          : Container(
+                              child: Text(
+                              'Please try again',
+                              style: TextStyle(fontSize: 20),
+                            ));
+                    }
+                  })
+             
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 }

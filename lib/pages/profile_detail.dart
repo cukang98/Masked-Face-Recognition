@@ -102,9 +102,9 @@ class _ProfileDetailState extends State<ProfileDetailPage> {
                         topLeft: const Radius.circular(40.0),
                         topRight: const Radius.circular(40.0),
                       )),
-                      padding:EdgeInsets.only(top:25),
+                  padding: EdgeInsets.only(top: 25),
                   child: ListView(
-                    padding: EdgeInsets.symmetric(horizontal:20),
+                    padding: EdgeInsets.symmetric(horizontal: 20),
                     children: [
                       FutureBuilder(
                         future: getUserName(),
@@ -153,35 +153,40 @@ class _ProfileDetailState extends State<ProfileDetailPage> {
   Widget buildTextField(
       String labelText, String placeholder, bool isPasswordTextField) {
     return Container(
-      height: 60,
+        height: 60,
         child: InkWell(
             customBorder: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
             child: Container(
               decoration: new BoxDecoration(
-                  color:  isPasswordTextField ? Color.fromRGBO(190, 150, 150, 1) : AppTheme.subColor,
+                  color: isPasswordTextField
+                      ? Color.fromRGBO(190, 150, 150, 1)
+                      : AppTheme.subColor,
                   borderRadius: new BorderRadius.circular(50)),
               padding: const EdgeInsets.all(15),
               child: Row(
                 children: [
-                  Text(labelText,style:TextStyle(color: isPasswordTextField ? Color.fromRGBO(255, 255, 255, 1) : AppTheme.subColorDark)),
+                  Text(labelText,
+                      style: TextStyle(
+                          color: isPasswordTextField
+                              ? Color.fromRGBO(255, 255, 255, 1)
+                              : AppTheme.subColorDark)),
                   Spacer(),
-                  Text(placeholder,style:TextStyle(color:AppTheme.subColorDark)),
-                  new Padding(
-                      padding: EdgeInsets.only(left: 5),
-                      child: Icon(Icons.arrow_forward_ios_rounded,
-                          size: 15, color: Colors.grey))
+                  Text(placeholder,
+                      style: TextStyle(color: Colors.black54)),
+                  
                 ],
               ),
             ),
             onTap: () {
-              Navigator.push(
-                context,
-                PageTransition(
-                    type: PageTransitionType.rightToLeft,
-                    child: EditProfileDetail(labelText, isPasswordTextField)),
-              );
+              if (isPasswordTextField)
+                Navigator.push(
+                  context,
+                  PageTransition(
+                      type: PageTransitionType.rightToLeft,
+                      child: EditProfileDetail(labelText, isPasswordTextField)),
+                );
             }));
   }
 }

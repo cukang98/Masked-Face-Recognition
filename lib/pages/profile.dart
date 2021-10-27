@@ -28,14 +28,14 @@ class Profile extends StatefulWidget {
   ProfileState createState() => ProfileState(email, username, imagePath);
 }
 
-class ProfileState extends State<Profile> {
+class ProfileState extends State<Profile> with TickerProviderStateMixin {
   RequestAssistant requestAssistant = RequestAssistant();
   final databaseRef = FirebaseDatabase.instance.reference();
   final String email;
   final String username;
   final String imagePath;
-
   ProfileState(this.email, this.username, this.imagePath);
+  FocusNode textFieldNode;
   @override
   void initState() {
     super.initState();
@@ -44,10 +44,6 @@ class ProfileState extends State<Profile> {
   RefreshController _refreshController =
       RefreshController(initialRefresh: false);
   void _onRefresh() async {
-    var localAuth = LocalAuthentication();
-    bool didAuthenticate = await localAuth.authenticate(
-        localizedReason: 'Please authenticate to show account balance',
-        useErrorDialogs: false);
     // monitor network fetch
     setState(() {});
     await Future.delayed(Duration(milliseconds: 1000));
@@ -80,6 +76,71 @@ class ProfileState extends State<Profile> {
     }
   }
 
+  Future<dynamic> getFilteredRecord(String keyword) async {
+    return FutureBuilder(
+      future: getCheckInRecord(),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.hasData) {
+          List data = [];
+          snapshot.data.forEach((key, values) {
+            data.add([
+              values['address'],
+              values['date'],
+              values['lt'],
+              values['ld']
+            ]);
+          });
+          data = new List.from(data.reversed);
+          return ListView.builder(
+            itemCount: snapshot.data.length,
+            // ignore: missing_return
+            itemBuilder: (context, index) {
+              if (data[index][0].toString().contains('keyword')) {
+                return FadeAnimation(
+                    1,
+                    Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50.0),
+                          ),
+                          elevation: 0,
+                          color: Color.fromRGBO(255, 242, 200, 1),
+                          child: Column(
+                            children: <Widget>[
+                              ListTile(
+                                leading: Icon(Icons.location_city,
+                                    size: 40, color: AppTheme.subColorDark),
+                                title: Text(data[index][0],
+                                    style: GoogleFonts.nunito(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12,
+                                        color: AppTheme.subColorDark)),
+                                // style: TextStyle(
+                                //   color:Color.fromRGBO(66, 152, 230, 1),
+                                //     fontSize: 11,
+                                //     fontWeight:
+                                //         FontWeight.w700)),
+                                subtitle: Text(data[index][1],
+                                    style: TextStyle(fontSize: 10)),
+                              ),
+                            ],
+                          ),
+                        )));
+              }
+            },
+          );
+        } else {
+          return Padding(
+              padding: EdgeInsets.only(top: 10),
+              child: Text("No record found.", style: TextStyle(fontSize: 13)));
+        }
+      },
+    );
+  }
+
+  final TextEditingController textController = TextEditingController();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   @override
   Widget build(BuildContext context) {
@@ -183,22 +244,22 @@ class ProfileState extends State<Profile> {
                         // Then close the drawer
                       },
                     ),
-                    ListTile(
-                      leading: Icon(Icons.settings),
-                      title: Text("Settings",
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Colors.grey,
-                          )),
-                      onTap: () {
-                        // Update the state of the app
-                        // ...
-                        // Then close the drawer
-                        Navigator.pop(context);
-                      },
-                    ),
+                    // ListTile(
+                    //   leading: Icon(Icons.settings),
+                    //   title: Text("Settings",
+                    //       style: TextStyle(
+                    //         fontFamily: 'Roboto',
+                    //         fontWeight: FontWeight.bold,
+                    //         fontSize: 16,
+                    //         color: Colors.grey,
+                    //       )),
+                    //   onTap: () {
+                    //     // Update the state of the app
+                    //     // ...
+                    //     // Then close the drawer
+                    //     Navigator.pop(context);
+                    //   },
+                    // ),
                   ],
                 )),
                 Divider(),
@@ -238,241 +299,319 @@ class ProfileState extends State<Profile> {
             body: SafeArea(
               child: Column(children: [
                 Container(
-                  decoration: new BoxDecoration(
-                      color: AppTheme.mainColorDark,
-                      borderRadius: new BorderRadius.only(
-                        bottomLeft: const Radius.circular(40.0),
-                        bottomRight: const Radius.circular(40.0),
-                      )),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.only(top: 15, left: 15),
-                        margin: EdgeInsets.only(bottom: 15),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                                icon: Icon(Icons.menu),
-                                color: Colors.white,
-                                onPressed: () =>
-                                    _scaffoldKey.currentState.openDrawer()),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Text(
-                                    'Welcome',
-                                    textAlign: TextAlign.left,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w400,
-                                      fontSize: 14,
-                                      letterSpacing: 0.2,
-                                      color: AppTheme.white,
-                                    ),
-                                  ),
-                                  Text(
-                                    username,
-                                    textAlign: TextAlign.left,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 22,
-                                      letterSpacing: 0.27,
-                                      color: AppTheme.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Column(
-                              children: [
-                                Container(
-                                    child: SizedBox(
-                                  width: 45,
-                                ))
-                              ],
-                            )
-                          ],
-                        ),
-                      ),
-                      CarouselSlider(
-                        options: CarouselOptions(
-                            height: 180.0,
-                            enlargeCenterPage: true,
-                            autoPlay: true,
-                            aspectRatio: 16 / 9,
-                            autoPlayCurve: Curves.fastOutSlowIn,
-                            enableInfiniteScroll: true,
-                            autoPlayAnimationDuration:
-                                Duration(milliseconds: 800),
-                            viewportFraction: 0.8),
-                        items: [
-                          Container(
-                            margin: EdgeInsets.all(5.0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10.0),
-                              image: DecorationImage(
-                                image: AssetImage('assets/c1.jpg'),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            margin: EdgeInsets.all(5.0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10.0),
-                              image: DecorationImage(
-                                image: AssetImage('assets/c2.jpg'),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            margin: EdgeInsets.all(5.0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10.0),
-                              image: DecorationImage(
-                                image: AssetImage('assets/c3.jpg'),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(
-                            left: 16, right: 16, top: 8, bottom: 8),
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                    right: 16, top: 8, bottom: 8),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.nearlyWhite,
-                                    borderRadius: const BorderRadius.all(
-                                      Radius.circular(38.0),
-                                    ),
-                                    boxShadow: <BoxShadow>[
-                                      BoxShadow(
-                                          color: Colors.grey.withOpacity(0.2),
-                                          offset: const Offset(0, 2),
-                                          blurRadius: 8.0),
-                                    ],
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 16, right: 16, top: 4, bottom: 4),
-                                    child: TextField(
-                                      onChanged: (String txt) {},
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                      ),
-                                      cursorColor: AppTheme.nearlyWhite,
-                                      decoration: InputDecoration(
-                                        border: InputBorder.none,
-                                        hintText: 'London...',
+                    decoration: new BoxDecoration(
+                        color: AppTheme.mainColorDark,
+                        borderRadius: new BorderRadius.only(
+                          bottomLeft: const Radius.circular(40.0),
+                          bottomRight: const Radius.circular(40.0),
+                        )),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.only(top: 15, left: 15),
+                          margin: EdgeInsets.only(bottom: 15),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              IconButton(
+                                  icon: Icon(Icons.menu),
+                                  color: Colors.white,
+                                  onPressed: () {
+                                    FocusScope.of(context).requestFocus(FocusNode());
+                                    _scaffoldKey.currentState.openDrawer();
+                                  }),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(
+                                      'Welcome',
+                                      textAlign: TextAlign.left,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: 14,
+                                        letterSpacing: 0.2,
+                                        color: AppTheme.white,
                                       ),
                                     ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: AppTheme.nearlyWhite,
-                                borderRadius: const BorderRadius.all(
-                                  Radius.circular(38.0),
-                                ),
-                                boxShadow: <BoxShadow>[
-                                  BoxShadow(
-                                      color: Colors.grey.withOpacity(0.4),
-                                      offset: const Offset(0, 2),
-                                      blurRadius: 8.0),
-                                ],
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: const BorderRadius.all(
-                                    Radius.circular(32.0),
-                                  ),
-                                  onTap: () {
-                                    // FocusScope.of(context)
-                                    //     .requestFocus(FocusNode());
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Icon(Icons.search,
-                                        size: 20, color: Color(0xFFFF6161)),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  margin:EdgeInsets.only(bottom:5)
-                ),
-                Expanded(
-                  child:Scrollbar(
-                    child: FutureBuilder(
-                  future: getCheckInRecord(),
-                  builder: (BuildContext context, AsyncSnapshot snapshot) {
-                    if (snapshot.hasData) {
-                      List data = [];
-                      snapshot.data.forEach((key, values) {
-                        data.add([
-                          values['address'],
-                          values['date'],
-                          values['lt'],
-                          values['ld']
-                        ]);
-                      });
-                      data = new List.from(data.reversed);
-                      return ListView.builder(
-                        itemCount: snapshot.data.length,
-                        itemBuilder: (context, index) {
-                          return FadeAnimation(
-                              1,
-                              Container(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 3),
-                                  child: Card(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(50.0),
+                                    Text(
+                                      username,
+                                      textAlign: TextAlign.left,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 22,
+                                        letterSpacing: 0.27,
+                                        color: AppTheme.white,
+                                      ),
                                     ),
-                                    elevation: 0,
-                                    color: Color.fromRGBO(255, 242, 200, 1),
-                                    child: Column(
-                                      children: <Widget>[
-                                        ListTile(
-                                          leading: Icon(Icons.location_city,
-                                              size: 40,
-                                              color:AppTheme.subColorDark),
-                                          title: Text(data[index][0],
-                                              style: GoogleFonts.nunito(
-                                                  fontWeight: FontWeight.w800,
-                                                  fontSize: 12,
-                                                  color: AppTheme.subColorDark)),
-                                          // style: TextStyle(
-                                          //   color:Color.fromRGBO(66, 152, 230, 1),
-                                          //     fontSize: 11,
-                                          //     fontWeight:
-                                          //         FontWeight.w700)),
-                                          subtitle: Text(data[index][1],
-                                              style: TextStyle(fontSize: 10)),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                children: [
+                                  Container(
+                                      child: SizedBox(
+                                    width: 45,
+                                  ))
+                                ],
+                              )
+                            ],
+                          ),
+                        ),
+                        AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) =>
+                                    FadeTransition(
+                                      opacity: animation,
+                                      child: SizeTransition(
+                                        child: child,
+                                        sizeFactor: animation,
+                                        axis: Axis.vertical,
+                                      ),
+                                    ),
+                            child: textController.text.isEmpty
+                                ? CarouselSlider(
+                                    options: CarouselOptions(
+                                        height: 180.0,
+                                        enlargeCenterPage: true,
+                                        autoPlay: true,
+                                        aspectRatio: 16 / 9,
+                                        autoPlayCurve: Curves.fastOutSlowIn,
+                                        enableInfiniteScroll: true,
+                                        autoPlayAnimationDuration:
+                                            Duration(milliseconds: 800),
+                                        viewportFraction: 0.8),
+                                    items: [
+                                      Container(
+                                        margin: EdgeInsets.all(5.0),
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10.0),
+                                          image: DecorationImage(
+                                            image: AssetImage('assets/c1.jpg'),
+                                            fit: BoxFit.cover,
+                                          ),
                                         ),
+                                      ),
+                                      Container(
+                                        margin: EdgeInsets.all(5.0),
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10.0),
+                                          image: DecorationImage(
+                                            image: AssetImage('assets/c2.jpg'),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        margin: EdgeInsets.all(5.0),
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10.0),
+                                          image: DecorationImage(
+                                            image: AssetImage('assets/c3.jpg'),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : FadeAnimation(5, Container())),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              left: 16, right: 16, top: 8, bottom: 8),
+                          child: Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                      right: 16, top: 8, bottom: 8),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.nearlyWhite,
+                                      borderRadius: const BorderRadius.all(
+                                        Radius.circular(38.0),
+                                      ),
+                                      boxShadow: <BoxShadow>[
+                                        BoxShadow(
+                                            color: Colors.grey.withOpacity(0.2),
+                                            offset: const Offset(0, 2),
+                                            blurRadius: 8.0),
                                       ],
                                     ),
-                                  )));
-                        },
-                      );
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 16,
+                                          right: 16,
+                                          top: 4,
+                                          bottom: 4),
+                                      child: TextField(
+                                        autofocus: false,
+                                        showCursor: true,
+                                        controller: textController,
+                                        onChanged: (String txt) {
+                                          setState(() {});
+                                        },
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                        ),
+                                        cursorColor: AppTheme.nearlyBlack,
+                                        decoration: InputDecoration(
+                                          border: InputBorder.none,
+                                          hintText: 'Search',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: textController.text.isNotEmpty
+                                      ? Color.fromRGBO(190, 150, 150, 1)
+                                      : Color.fromRGBO(150, 210, 150, 1),
+                                  borderRadius: const BorderRadius.all(
+                                    Radius.circular(38.0),
+                                  ),
+                                  boxShadow: <BoxShadow>[
+                                    BoxShadow(
+                                        color: Colors.grey.withOpacity(0.4),
+                                        offset: const Offset(0, 2),
+                                        blurRadius: 8.0),
+                                  ],
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: const BorderRadius.all(
+                                      Radius.circular(32.0),
+                                    ),
+                                    onTap: () {
+                                      if (textController.text.isNotEmpty) {
+                                        FocusScope.of(context).unfocus();
+                                        textController.clear();
+                                        setState(() {});
+                                      }
+                                    },
+                                    child: Ink(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: textController.text.isNotEmpty
+                                          ? Icon(Icons.clear_rounded,
+                                              size: 20, color: Colors.white)
+                                          : Icon(Icons.search,
+                                              size: 20,
+                                              color: Color(0xFFFF6161)),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    margin: EdgeInsets.only(bottom: 5)),
+                Expanded(
+                    child: Scrollbar(
+                        child: FutureBuilder(
+                  future: getCheckInRecord(),
+                  // ignore: missing_return
+                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                    if (snapshot.hasData) {
+                      if (snapshot.connectionState == ConnectionState.done) {
+                        List data = [];
+                        snapshot.data.forEach((key, values) {
+                          if (textController.text.isNotEmpty) {
+                            if (values['address']
+                                .toString()
+                                .toLowerCase()
+                                .contains(textController.text
+                                    .toString()
+                                    .toLowerCase())) {
+                              data.add([
+                                values['address'],
+                                values['date'],
+                                values['lt'],
+                                values['ld']
+                              ]);
+                            }
+                          } else {
+                            data.add([
+                              values['address'],
+                              values['date'],
+                              values['lt'],
+                              values['ld']
+                            ]);
+                          }
+                        });
+                        data = new List.from(data.reversed);
+                        if (data.length > 0) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.done) {
+                            return ListView.builder(
+                              itemCount: snapshot.data.length,
+                              itemBuilder: (context, index) {
+                                return FadeAnimation(
+                                    1,
+                                    Container(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 3),
+                                        child: Card(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(50.0),
+                                          ),
+                                          elevation: 0,
+                                          color:
+                                              Color.fromRGBO(255, 242, 200, 1),
+                                          child: Column(
+                                            children: <Widget>[
+                                              ListTile(
+                                                leading: Icon(
+                                                    Icons.location_city,
+                                                    size: 40,
+                                                    color:
+                                                        AppTheme.subColorDark),
+                                                title: Text(
+                                                    data[index][0] ??
+                                                        "Invalid Adddress",
+                                                    style: GoogleFonts.nunito(
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        fontSize: 12,
+                                                        color: AppTheme
+                                                            .subColorDark)),
+                                                // style: TextStyle(
+                                                //   color:Color.fromRGBO(66, 152, 230, 1),
+                                                //     fontSize: 11,
+                                                //     fontWeight:
+                                                //         FontWeight.w700)),
+                                                subtitle: Text(data[index][1],
+                                                    style: TextStyle(
+                                                        fontSize: 10)),
+                                              ),
+                                            ],
+                                          ),
+                                        )));
+                              },
+                            );
+                          }
+                        } else {
+                          return Padding(
+                              padding: EdgeInsets.only(top: 10),
+                              child: Text("No record found.",
+                                  style: TextStyle(fontSize: 13)));
+                        }
+                      } else {
+                        return Padding(
+                            padding: EdgeInsets.only(top: 10),
+                            child: Text("Loading...",
+                                style: TextStyle(fontSize: 13)));
+                      }
                     } else {
                       return Padding(
                           padding: EdgeInsets.only(top: 10),
@@ -480,8 +619,8 @@ class ProfileState extends State<Profile> {
                               style: TextStyle(fontSize: 13)));
                     }
                   },
-                ))
-              )]),
+                )))
+              ]),
             ),
             bottomNavigationBar: BottomAppBar(
               child: Row(
@@ -494,7 +633,6 @@ class ProfileState extends State<Profile> {
                         child: Material(
                           type: MaterialType.transparency,
                           child: InkWell(
-                            
                             onTap: () {},
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -503,6 +641,12 @@ class ProfileState extends State<Profile> {
                                 AppButton(
                                   text: "Check In",
                                   onPressed: () {
+                                    // Unfocus
+                                    FocusScopeNode currentFocus =
+                                        FocusScope.of(context);
+                                    if (!currentFocus.hasPrimaryFocus) {
+                                      currentFocus.unfocus();
+                                    }
                                     Navigator.push(
                                         context,
                                         PageTransition(
